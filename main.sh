@@ -238,14 +238,45 @@ group.initial.rebalance.delay.ms=3000
 
 15) mkdir /opt/kafka/kafka-bin/connect && cd  /opt/kafka/kafka-bin/connect && wget https://repo1.maven.org/maven2/io/debezium/debezium-connector-mysql/2.6.1.Final/debezium-connector-mysql-2.6.1.Final-plugin.tar.gz && tar xfz debezium-connector-mysql-2.6.1.Final-plugin.tar.gz && rm -fr debezium-connector-mysql-2.6.1.Final-plugin.tar.gz
 16) add plugin.path=/opt/kafka/kafka-bin/connect to /opt/kafka/kafka-bin/config/connect-distributed.properties 
-17) /opt/kafka/kafka-bin/bin/connect-distributed.sh   /opt/kafka/kafka-bin/config/connect-distributed.properties
-18) /opt/kafka/kafka-bin/bin/connect-distributed.sh -daemon  /opt/kafka/kafka-bin/config/connect-distributed.properties
+17) /opt/kafka/kafka-bin/bin/connect-distributed.sh  /opt/kafka/kafka-bin/config/connect-distributed.properties
+18) vim /opt/debezium.json
+   {
+ "name": "advari-database",
+ "config": {
+   "connector.class": "io.debezium.connector.mysql.MySqlConnector",
+   "database.user": "david",
+   "database.server.id": "30",
+   "database.history.kafka.bootstrap.servers": "172.16.2.161:9092,172.16.2.162:9092,172.16.2.163:9092",
+   "schema.history.internal.kafka.bootstrap.servers": "172.16.2.161:9092,172.16.2.162:9092,172.16.2.163:9092",
+   "database.history.kafka.topic": "sync-advari-organization",
+   "schema.history.internal.kafka.topic": "sync-advari",
+   "database.server.name": "advari",
+   "topic.prefix": "mysql",
+    "database.port": "3306",
+    "include.schema.changes": "true",
+    "database.hostname": "172.16.50.13",
+    "database.password": "fnWIS1USrauTe5MWuFnC",
+    "table.include.list": "organization",
+    "database.include.list": "advari"
+   }
+}
 
+19) cd /opt/ && curl -s  -X POST -H 'Content-type:application/json' -d  @debezium.json http://172.16.2.161:8083/connectors
 
+20) 
+curl -H "Application/json" 127.0.0.1:8083/connectors
+curl -H "Application/json" 127.0.0.1:8083/connector-plugins
+curl -H "Application/json" 127.0.0.1:8083/connectors/advari-database/status
+curl -X POST  -H "Application/json" 127.0.0.1:8083/connectors/advari-database/restart 
+curl -X "DELETE"    http://127.0.0.1:8083/connectors/advari-database
 
+21) vim /opt/config.yml
 
+kafka:
+  clusters:
+    -
+      name: local
+      bootstrapServers: 172.16.2.161:9092,172.16.2.162:9092,172.16.2.163:9092
 
-
-
-
+22) docker run -it -p 8080:8080 -e spring.config.additional-location=/tmp/config.yml -v /opt/config.yml:/tmp/config.yml provectuslabs/kafka-ui
  
