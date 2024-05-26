@@ -1,6 +1,6 @@
 1) wget https://downloads.apache.org/kafka/3.7.0/kafka_2.13-3.7.0.tgz
 2) wget https://dlcdn.apache.org/zookeeper/zookeeper-3.8.4/apache-zookeeper-3.8.4-bin.tar.gz
-3) mkdir -p /opt/kafka && mkdir -p /opt/kafka-bin/ && mkdir -p /opt/kafka-data && useradd kafka && chown -R kafka:kafka /opt/kafka && mkdir -p /var/log/kafka && chown -R kakfa:kafka /var/log/kafka
+3) mkdir -p /opt/kafka && mkdir -p /opt/kafka-bin/ && mkdir -p /opt/kafka-data && useradd kafka && chown -R kafka:kafka /opt/kafka && mkdir -p /var/log/kafka && chown -R kafka:kafka /var/log/kafka
 4) mkdir -p /opt/zookeeper && mkdir -p /opt/zookeeper-bin/ && mkdir -p /opt/zookeeper-data && useradd zookeeper && chown -R zookeeper:zookeeper /opt/zookeeper && mkdir -p /var/log/zookeeper && chown -R zookeeper:zookeeper /var/log/zookeeper
 5) vim /etc/systemd/system/kafka.service
    [Unit]
