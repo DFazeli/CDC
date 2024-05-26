@@ -1,7 +1,7 @@
 1) wget https://downloads.apache.org/kafka/3.7.0/kafka_2.13-3.7.0.tgz
 2) wget https://dlcdn.apache.org/zookeeper/zookeeper-3.8.4/apache-zookeeper-3.8.4-bin.tar.gz
 3) mkdir -p /opt/kafka && mkdir -p /opt/kafka/kafka-bin && mkdir -p /opt/kafka/kafka-data && useradd kafka && mkdir -p /var/log/kafka && chown -R kafka:kafka /var/log/kafka  && tar xfz kafka_2.13-3.7.0.tgz && mv /opt/kafka_2.13-3.7.0/* /opt/kafka/kafka-bin/ && chown -R kafka:kafka /opt/kafka
-4) mkdir -p /opt/zookeeper && mkdir -p /opt/zookeeper/conf/ && mkdir -p /opt/zookeeper-bin/ && mkdir -p /opt/zookeeper-data && useradd zookeeper && mkdir -p /var/log/zookeeper && chown -R zookeeper:zookeeper /var/log/zookeeper && tar xfz apache-zookeeper-3.8.4-bin.tar.gz && mv apache-zookeeper-3.8.4-bin/* zookeeper-bin/ && chown -R zookeeper:zookeeper /opt/zookeeper
+4) mkdir -p /opt/zookeeper && mkdir -p /opt/zookeeper/conf/ && mkdir -p /opt/zookeeper/zookeeper-bin/ && mkdir -p /opt/zookeeper/zookeeper-data && useradd zookeeper && mkdir -p /var/log/zookeeper && chown -R zookeeper:zookeeper /var/log/zookeeper && tar xfz apache-zookeeper-3.8.4-bin.tar.gz && mv apache-zookeeper-3.8.4-bin/* zookeeper-bin/ && chown -R zookeeper:zookeeper /opt/zookeeper
 5) vim /etc/systemd/system/kafka.service
    [Unit]
 Description=Apache Kafka server (broker)
