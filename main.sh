@@ -1,14 +1,13 @@
 1) wget https://downloads.apache.org/kafka/3.7.0/kafka_2.13-3.7.0.tgz
 2) wget https://dlcdn.apache.org/zookeeper/zookeeper-3.8.4/apache-zookeeper-3.8.4-bin.tar.gz
-3) mkdir -p /opt/kafka && mkdir -p /opt/kafka/kafka-bin && mkdir -p /opt/kafka/kafka-data && useradd kafka && mkdir -p /var/log/kafka && chown -R kafka:kafka /var/log/kafka  && tar xfz kafka_2.13-3.7.0.tgz && mv /opt/kafka_2.13-3.7.0/* /opt/kafka/kafka-bin/ && chown -R kafka:kafka /opt/kafka
-4) mkdir -p /opt/zookeeper && mkdir -p /opt/zookeeper/conf/ && mkdir -p /opt/zookeeper/zookeeper-bin/ && mkdir -p /opt/zookeeper/zookeeper-data && useradd zookeeper && mkdir -p /var/log/zookeeper && chown -R zookeeper:zookeeper /var/log/zookeeper && tar xfz apache-zookeeper-3.8.4-bin.tar.gz && mv apache-zookeeper-3.8.4-bin/* zookeeper-bin/ && chown -R zookeeper:zookeeper /opt/zookeeper
+3) tar xfz /opt/kafka_2.13-3.7.0.tgz && mkdir -p /opt/kafka && mkdir -p /opt/kafka/kafka-bin && mkdir -p /opt/kafka/kafka-data  && mkdir -p /var/log/kafka  && mv /opt/kafka_2.13-3.7.0/* /opt/kafka/kafka-bin/ && useradd kafka && chown -R kafka:kafka /opt/kafka && chown -R kafka:kafka /var/log/kafka
+4) tar xfz apache-zookeeper-3.8.4-bin.tar.gz  && mkdir -p /opt/zookeeper && mkdir -p /opt/zookeeper/zookeeper-bin/ && mv /opt/apache-zookeeper-3.8.4-bin/* /opt/zookeeper/zookeeper-bin/  && mkdir -p /opt/zookeeper/zookeeper-bin/conf/  && mkdir -p /opt/zookeeper/zookeeper-data && useradd zookeeper && mkdir -p /var/log/zookeeper && chown -R zookeeper:zookeeper /var/log/zookeeper && chown -R zookeeper:zookeeper /opt/zookeeper
 5) vim /etc/systemd/system/kafka.service
-   [Unit]
+[Unit]
 Description=Apache Kafka server (broker)
 Documentation=http://kafka.apache.org/documentation.html
 Requires=network.target remote-fs.target
 After=network.target remote-fs.target zookeeper.service
-
 [Service]
 Type=simple
 User=kafka
@@ -16,10 +15,8 @@ Group=kafka
 Environment="KAFKA_JMX_OPTS=-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.local.only=false -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
 Environment="JMX_PORT=9999"
 Environment="LOG_DIR=/var/log/kafka"
-
 ExecStart=/opt/kafka/kafka-bin/bin/kafka-server-start.sh /opt/kafka/kafka-bin/config/server.properties
 ExecStop=/opt/kafka/kafka-bin/bin/kafka-server-start.sh
-
 [Install]
 WantedBy=multi-user.target
 
@@ -29,20 +26,18 @@ Description=Apache Zookeeper server
 Documentation=http://zookeeper.apache.org
 Requires=network.target remote-fs.target
 After=network.target remote-fs.target
-
 [Service]
 Type=forking
 User=zookeeper
 Group=zookeeper
-ExecStart=/opt/zookeeper/bin/zkServer.sh start
-ExecStop=/opt/zookeeper/bin/zkServer.sh stop
-ExecReload=/opt/zookeeper/bin/zkServer.sh restart
+ExecStart=/opt/zookeeper/zookeeper-bin/bin/zkServer.sh start
+ExecStop=/opt/zookeeper/zookeeper-bin/bin/zkServer.sh stop
+ExecReload=/opt/zookeeper/zookeeper-bin/bin/zkServer.sh restart
 WorkingDirectory=/var/lib/zookeeper
-
 [Install]
 WantedBy=multi-user.target
 
-7) vim /opt/zookeeper/conf/zoo.cfg
+7) vim /opt/zookeeper/zookeeper-bin/conf/zoo.cfg
 # The number of milliseconds of each tick
 tickTime=2000
 # The number of ticks that the initial
@@ -84,12 +79,11 @@ server.161=172.16.2.161:2888:3888
 server.162=172.16.2.162:2888:3888
 server.163=172.16.2.163:2888:3888
 
-8) add ZOO_LOG_DIR="/var/log/zookeeper/" to /opt/zookeeper/bin/zkEnv.sh in line #30
+8) add ZOO_LOG_DIR="/var/log/zookeeper/" to /opt/zookeeper/zookeeper-bin/bin/zkEnv.sh in line #30
 
 9) vim /opt/zookeeper/zookeeper-data/myid 
      
 10) vim /opt/kafka/kafka-bin/config/server.properties	
-root@mq-01:~# cat /opt/kafka/kafka-bin/config/server.properties
 # Licensed to the Apache Software Foundation (ASF) under one or more
 # contributor license agreements.  See the NOTICE file distributed with
 # this work for additional information regarding copyright ownership.
