@@ -1,0 +1,34 @@
+root@nextcloud:/opt# cat  /etc/logstash/conf.d/csv.conf
+input {
+  file {
+    path => "/opt/saam-service-contact.csv"
+    start_position => "beginning"
+    sincedb_path => "/var/lib/logstash/plugins/inputs/file/.sincedb_saam-csv"
+
+    }
+  }
+
+
+filter {
+   csv {
+    separator => ","
+    skip_header => "true"
+    columns => ["نام خانوادگی", "کد ملی", "شماره موبایل"]
+  }
+  mutate {
+    remove_field => ["message", "host", "path", "@version", "@timestamp"]
+  }
+}
+
+output {
+  kafka {
+    bootstrap_servers => "kafka01.emzano.local:9092,kafka02.emzano.local:9092,kafka03.emzano.local:9092"
+    topic_id => "saam-csv"
+    codec => json
+  }
+}
+
+#------------------------------------------
+
+
+
