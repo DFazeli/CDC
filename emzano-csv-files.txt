@@ -1,3 +1,10 @@
+root@nextcloud:/opt# cat saam-service-contact.csv
+پروانه السادات محمدی,0069736782,09122907249
+حسین  عبداللهی,1718164130,09143116695
+جواد سلام زاده,1551904470,09141211281
+یاشار رامین وفا,1372116915,09143116336
+david,4189962910,09143112020
+#-------------------------------------------------------------------
 root@nextcloud:/opt# cat  /etc/logstash/conf.d/csv.conf
 input {
   file {
@@ -13,7 +20,7 @@ filter {
    csv {
     separator => ","
     skip_header => "true"
-    columns => ["نام خانوادگی", "کد ملی", "شماره موبایل"]
+    columns => ["title", "nationalCode", "contact"]
   }
   mutate {
     remove_field => ["message", "host", "path", "@version", "@timestamp"]
@@ -29,6 +36,119 @@ output {
 }
 
 #------------------------------------------
+root@nextcloud:/opt# cat saam-api-appex.py
+import json
+import subprocess
+import logging
+from confluent_kafka import Consumer, KafkaException, KafkaError
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
+
+# Kafka configuration
+conf = {
+        'bootstrap.servers': 'kafka01.emzano.local:9092,kafka02.emzano.local:9092,kafka03.emzano.local:9092',
+    'group.id': 'saam-service2',
+    'auto.offset.reset': 'earliest'
+}
+
+# Create Kafka consumer
+consumer = Consumer(conf)
+consumer.subscribe(['saam-csv'])
+
+def process_message(message):
+    try:
+        # Parse the Kafka message
+        data = json.loads(message)
+        logging.debug(f"Received message: {data}")
+
+        # Prepare data for the curl command
+        title = data.get("title", "")
+        national_code = data.get("nationalCode", "")
+        contact = data.get("contact", "")
+
+        # Create the curl command
+        curl_command = f"""
+        curl -X 'POST' \\
+        'http://109.206.255.76:26500/API/V1/Documents/b3b78885-ccac-473b-99e2-2500713f649e/Use' \\
+        -H 'accept: text/plain' \\
+        -H 'Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6IkU5MjI1MDYzQjE2NDMzRTQ1MDgxRjRGOTNGRUIwMjEwIiwidHlwIjoiYXQrand0In0.eyJuYmYiOjE3MTY4MTU3OTMsImV4cCI6MTcxNzQyMDU5MywiaXNzIjoiaHR0cDovL2lkcCIsImNsaWVudF9pZCI6ImNsaWVudCIsInN1YiI6ImU5YzE0M2Y1LTBmNDEtNDBiNy1hZTVjLTVjMjU4MzliNDc3YSIsImF1dGhfdGltZSI6MTcxNjgxNTc5MywiaWRwIjoibG9jYWwiLCJyb2xlIjoiQWRtaW5pc3RyYXRvclJvbGUiLCJqdGkiOiI2RkM0NkY1RkM5RTQ1OEFFNkQ5M0RBQTEzMTNFQTM0MCIsImlhdCI6MTcxNjgxNTc5Mywic2NvcGUiOlsiYXZhdGFyIiwiY2xtLmFwaSIsImNvbnRyYWN0LmFwaSIsImNvdW5zdWxlci5hcGkiLCJlbWFpbCIsIklkZW50aXR5U2VydmVyQXBpIiwiaW5mb25hbWUiLCJpc2xlZ2FsIiwiaXN2ZXJpZmllZCIsIm9wZW5pZCIsInBheW1lbnQuYXBpIiwicHJvZmlsZSIsInJvbGUiLCJyb2xlcyIsInRpY2tldGluZy5hcGkiLCJvZmZsaW5lX2FjY2VzcyJdLCJhbXIiOlsicHdkIl19.I5Q3vyX0GZQPrdSIKEnBr_iLGU7jGnCTURCXs5Sbd8Gt2Qgf5NeuPcXuKZIv3Hxv7VovMX94mIuywLuzfSpwmZ5vDnuP0S0y3APPFxpKECe_lqHoiaXWpobvkZ4-Lw_ilbZ_pVR7tXhtC8aO6rQk4HwN9xJQIp81C5jEhB2-r7ULLsW4ML6AOARiDNm5AgptJuZk4aoSRdDWc49eFD-OU5hCeflLBIwQLpUqcKgNtREnSdHjvDoYwGmTVxiqeplJg7Te02sZ-dbDYAsJ2dLp2cNf7rmqzsq2r1JF-PA0lH3JnfUooWdhEH4NDw8ii84uhSk1k5BSCrbOseahyZaqbw' \\
+        -H 'Content-Type: application/json-patch+json' \\
+        -d '{{
+            "title": "{title}",
+            "callbackUrl": "callback v2",
+            "expiredAt": "2024-05-28T04:01:38.569Z",
+            "certificatePayment": true,
+            "executionNotifyWorkflowStrategy": 0,
+            "workflows": [
+                {{
+                    "id": "3a59b2cf-02ac-42c7-bbb5-220e75c68a46",
+                    "title": "{title}",
+                    "contact": "{contact}",
+                    "nationalCode": "{national_code}",
+                    "fields": {{
+                        "data": [],
+                        "identity": []
+                    }}
+                }}
+            ],
+            "documentFields": [],
+            "ownerFields": []
+        }}'
+        """
+        logging.debug(f"Executing curl command: {curl_command}")
+
+        # Execute the curl command
+        result = subprocess.run(curl_command, shell=True, check=True, capture_output=True, text=True)
+        logging.debug(f"Curl command output: {result.stdout}")
+        logging.debug(f"Curl command error (if any): {result.stderr}")
+    except json.JSONDecodeError as e:
+        logging.error(f"Failed to decode JSON message: {message}. Error: {e}")
+    except subprocess.CalledProcessError as e:
+        logging.error(f"Curl command failed with error: {e}")
+    except Exception as e:
+        logging.error(f"An unexpected error occurred: {e}")
+
+def main():
+    try:
+        while True:
+            msg = consumer.poll(timeout=1.0)  # Poll for new messages
+
+            if msg is None:
+                continue
+
+            if msg.error():
+                if msg.error().code() == KafkaError._PARTITION_EOF:
+                    logging.info('End of partition reached {0}/{1}'.format(msg.topic(), msg.partition()))
+                    continue
+                else:
+                    raise KafkaException(msg.error())
+
+            # Process the message
+            process_message(msg.value().decode('utf-8'))
+
+    except KeyboardInterrupt:
+        logging.info("Consumer interrupted by user")
+    finally:
+        # Close down consumer to commit final offsets.
+        consumer.close()
+        logging.info("Kafka consumer closed")
+
+if __name__ == "__main__":
+    main()
+
+#----------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
 
 
 
